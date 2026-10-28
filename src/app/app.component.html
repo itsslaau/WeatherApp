@@ -1,0 +1,152 @@
+<!-- app.component.html - Template Angular Completo -->
+<div class="app-container">
+  <div class="background-overlay"></div>
+  <div class="weather-app">
+    <!-- Header Section -->
+    <header class="app-header">
+      <h1>🌤️ App del Clima</h1>
+      <p>Consulta el clima actual de cualquier ciudad</p>
+    </header>
+
+    <main class="main-content">
+      <!-- Search Component -->
+      <div class="search-section card">
+        <div class="card__body">
+          <div class="form-group">
+            <label for="cityInput" class="form-label">Ciudad</label>
+            <div class="search-container">
+              <input 
+                type="text" 
+                id="cityInput"
+                class="form-control search-input" 
+                placeholder="Ingresa el nombre de la ciudad..."
+                [(ngModel)]="city"
+                (keyup.enter)="onSearch()"
+                [disabled]="loading"
+              >
+              <button type="button" class="search-btn" (click)="onSearch()"
+                [disabled]="loading || !city.trim()">
+                <span class="search-icon">🔍</span>
+                <span class="search-text">Buscar</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Loading State -->
+      <div class="loading-state card" *ngIf="loading">
+        <div class="card__body">
+          <div class="loading-content">
+            <div class="loading-spinner"></div>
+            <p>Consultando el clima...</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Error State -->
+      <div class="error-state card" *ngIf="errorMessage && !loading">
+        <div class="card__body">
+          <div class="error-content">
+            <p class="error-message">❌ {{ errorMessage }}</p>
+            <button class="btn btn--secondary" (click)="onSearch()">
+              Intentar de nuevo
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Weather Data Component -->
+      <div class="weather-data card" *ngIf="weatherData && !loading && !errorMessage">
+        <div class="card__body">
+          <div class="weather-header">
+            <h2>{{ city }}</h2>
+            <div class="weather-icon">{{ weatherIcon }}</div>
+          </div>
+          
+          <div class="weather-details">
+            <!-- Temperature Section -->
+            <div class="temperature-section">
+              <div class="temperature-main">
+                <span class="temperature-value">{{ weatherData.current.temperature_2m | number:'1.0-0' }}</span>
+                <span class="temperature-unit">°C</span>
+              </div>
+              <div class="temperature-feels">
+                <span>Máx: {{ tempMax }} / Mín: {{ tempMin }}</span>
+              </div>
+            </div>
+
+            <!-- Weather Description -->
+            <div class="weather-description">
+              <p>{{ getWeatherDescription(weatherData.current.weather_code) }}</p>
+            </div>
+
+            <!-- Weather Metrics -->
+            <div class="weather-metrics">
+              <div class="metric-item">
+                <div class="metric-icon">💧</div>
+                <div class="metric-info">
+                  <span class="metric-label">Humedad</span>
+                  <span class="metric-value">{{ weatherData.current.relative_humidity_2m }}%</span>
+                </div>
+              </div>
+
+              <div class="metric-item">
+                <div class="metric-icon">💨</div>
+                <div class="metric-info">
+                  <span class="metric-label">Viento</span>
+                  <span class="metric-value">{{ weatherData.current.wind_speed_10m | number:'1.1-1' }} km/h</span>
+                </div>
+              </div>
+
+              <div class="metric-item">
+                <div class="metric-icon">🌡️</div>
+                <div class="metric-info">
+                  <span class="metric-label">Sensación</span>
+                  <span class="metric-value">{{ weatherData.current.temperature_2m | number:'1.0-0' }}°C</span>
+                </div>
+              </div>
+
+              <div class="metric-item">
+                <div class="metric-icon">🌧️</div>
+                <div class="metric-info">
+                  <span class="metric-label">Precipitación</span>
+                  <span class="metric-value">{{ weatherData.daily.precipitation_sum[0] | number:'1.1-1' }} mm</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Weather Footer -->
+            <div class="weather-footer">
+              <p class="update-time">
+                Última actualización: 
+                <span>{{ weatherData.current.time | date:'short':'es' }}</span>
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Recent Searches -->
+      <div class="recent-searches card" *ngIf="recentSearches.length > 0 && !loading">
+        <div class="card__body">
+          <h3>Búsquedas recientes</h3>
+          <div class="recent-list">
+            <span 
+              *ngFor="let search of recentSearches" 
+              class="recent-item"
+              (click)="searchCity(search)"
+            >
+              {{ search }}
+            </span>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="app-footer">
+      <p>Datos proporcionados por <a href="https://open-meteo.com/" target="_blank">Open-Meteo</a></p>
+    </footer>
+  </div>
+</div>
