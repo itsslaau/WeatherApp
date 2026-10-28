@@ -51,3 +51,7 @@ Angular app showing current weather and a 7-day forecast for any city, using [Op
    npm start
    ```
 4. Open your browser at `http://localhost:4200`.
+
+## Licencia / License
+
+[MIT](LICENSE)
