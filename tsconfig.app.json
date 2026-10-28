@@ -1,24 +1,9 @@
 {
-    "compilerOptions": {
-      "target": "es2015",
-      "module": "es2020",
-      "moduleResolution": "node",
-      "lib": ["es2018", "dom"],
-      "outDir": "./dist/out-tsc",
-      "baseUrl": "./",
-      "types": [],
-      "strict": true,
-      "esModuleInterop": true,
-      "skipLibCheck": true,
-      "forceConsistentCasingInFileNames": true
-    },
-    "exclude": [
-      "node_modules",
-      "src/test.ts",
-      "**/*.spec.ts"
-    ],
-    "include": [
-      "src/**/*.ts"
-    ]
-  }
-  
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "outDir": "./out-tsc/app",
+    "types": []
+  },
+  "files": ["src/main.ts"],
+  "include": ["src/**/*.d.ts"]
+}

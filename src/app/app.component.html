@@ -1,152 +1,186 @@
-<!-- app.component.html - Template Angular Completo -->
-<div class="app-container">
-  <div class="background-overlay"></div>
-  <div class="weather-app">
-    <!-- Header Section -->
-    <header class="app-header">
-      <h1>🌤️ App del Clima</h1>
-      <p>Consulta el clima actual de cualquier ciudad</p>
-    </header>
+<div class="sky" aria-hidden="true"></div>
 
-    <main class="main-content">
-      <!-- Search Component -->
-      <div class="search-section card">
-        <div class="card__body">
-          <div class="form-group">
-            <label for="cityInput" class="form-label">Ciudad</label>
-            <div class="search-container">
-              <input 
-                type="text" 
-                id="cityInput"
-                class="form-control search-input" 
-                placeholder="Ingresa el nombre de la ciudad..."
-                [(ngModel)]="city"
-                (keyup.enter)="onSearch()"
-                [disabled]="loading"
-              >
-              <button type="button" class="search-btn" (click)="onSearch()"
-                [disabled]="loading || !city.trim()">
-                <span class="search-icon">🔍</span>
-                <span class="search-text">Buscar</span>
-              </button>
-            </div>
-          </div>
-        </div>
+<div class="shell">
+  <header class="topbar">
+    <span class="brand"><span aria-hidden="true">🌤️</span> WeatherApp</span>
+
+    <form class="search" role="search" (submit)="onSubmit($event)">
+      <div class="search__field">
+        <span class="search__icon" aria-hidden="true">🔍</span>
+        <input
+          type="search"
+          class="search__input"
+          placeholder="Buscar ciudad…"
+          autocomplete="off"
+          aria-label="Buscar ciudad"
+          role="combobox"
+          aria-autocomplete="list"
+          aria-controls="suggestions"
+          [attr.aria-expanded]="suggestionsOpen() && suggestions().length > 0"
+          [attr.aria-activedescendant]="activeIndex() >= 0 ? 'suggestion-' + activeIndex() : null"
+          [value]="query()"
+          (input)="onQueryInput($any($event.target).value)"
+          (keydown)="onSearchKeydown($event)"
+          (focus)="suggestionsOpen.set(true)"
+          (blur)="closeSuggestionsSoon()"
+        >
+        <button
+          type="button"
+          class="icon-btn"
+          title="Usar mi ubicación"
+          aria-label="Usar mi ubicación"
+          [class.is-busy]="locating()"
+          [disabled]="locating()"
+          (click)="useMyLocation()"
+        >📍</button>
       </div>
 
-      <!-- Loading State -->
-      <div class="loading-state card" *ngIf="loading">
-        <div class="card__body">
-          <div class="loading-content">
-            <div class="loading-spinner"></div>
-            <p>Consultando el clima...</p>
-          </div>
-        </div>
-      </div>
-
-      <!-- Error State -->
-      <div class="error-state card" *ngIf="errorMessage && !loading">
-        <div class="card__body">
-          <div class="error-content">
-            <p class="error-message">❌ {{ errorMessage }}</p>
-            <button class="btn btn--secondary" (click)="onSearch()">
-              Intentar de nuevo
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <!-- Weather Data Component -->
-      <div class="weather-data card" *ngIf="weatherData && !loading && !errorMessage">
-        <div class="card__body">
-          <div class="weather-header">
-            <h2>{{ city }}</h2>
-            <div class="weather-icon">{{ weatherIcon }}</div>
-          </div>
-          
-          <div class="weather-details">
-            <!-- Temperature Section -->
-            <div class="temperature-section">
-              <div class="temperature-main">
-                <span class="temperature-value">{{ weatherData.current.temperature_2m | number:'1.0-0' }}</span>
-                <span class="temperature-unit">°C</span>
-              </div>
-              <div class="temperature-feels">
-                <span>Máx: {{ tempMax }} / Mín: {{ tempMin }}</span>
-              </div>
-            </div>
-
-            <!-- Weather Description -->
-            <div class="weather-description">
-              <p>{{ getWeatherDescription(weatherData.current.weather_code) }}</p>
-            </div>
-
-            <!-- Weather Metrics -->
-            <div class="weather-metrics">
-              <div class="metric-item">
-                <div class="metric-icon">💧</div>
-                <div class="metric-info">
-                  <span class="metric-label">Humedad</span>
-                  <span class="metric-value">{{ weatherData.current.relative_humidity_2m }}%</span>
-                </div>
-              </div>
-
-              <div class="metric-item">
-                <div class="metric-icon">💨</div>
-                <div class="metric-info">
-                  <span class="metric-label">Viento</span>
-                  <span class="metric-value">{{ weatherData.current.wind_speed_10m | number:'1.1-1' }} km/h</span>
-                </div>
-              </div>
-
-              <div class="metric-item">
-                <div class="metric-icon">🌡️</div>
-                <div class="metric-info">
-                  <span class="metric-label">Sensación</span>
-                  <span class="metric-value">{{ weatherData.current.temperature_2m | number:'1.0-0' }}°C</span>
-                </div>
-              </div>
-
-              <div class="metric-item">
-                <div class="metric-icon">🌧️</div>
-                <div class="metric-info">
-                  <span class="metric-label">Precipitación</span>
-                  <span class="metric-value">{{ weatherData.daily.precipitation_sum[0] | number:'1.1-1' }} mm</span>
-                </div>
-              </div>
-            </div>
-
-            <!-- Weather Footer -->
-            <div class="weather-footer">
-              <p class="update-time">
-                Última actualización: 
-                <span>{{ weatherData.current.time | date:'short':'es' }}</span>
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Recent Searches -->
-      <div class="recent-searches card" *ngIf="recentSearches.length > 0 && !loading">
-        <div class="card__body">
-          <h3>Búsquedas recientes</h3>
-          <div class="recent-list">
-            <span 
-              *ngFor="let search of recentSearches" 
-              class="recent-item"
-              (click)="searchCity(search)"
+      @if (suggestionsOpen() && suggestions().length) {
+        <ul id="suggestions" class="suggestions" role="listbox">
+          @for (s of suggestions(); track $index) {
+            <li
+              [id]="'suggestion-' + $index"
+              role="option"
+              class="suggestion"
+              [class.is-active]="$index === activeIndex()"
+              [attr.aria-selected]="$index === activeIndex()"
+              (mousedown)="$event.preventDefault()"
+              (click)="selectPlace(s)"
             >
-              {{ search }}
+              <span class="suggestion__name">{{ s.name }}</span>
+              <span class="suggestion__meta">{{ placeMeta(s) }}</span>
+            </li>
+          }
+        </ul>
+      }
+    </form>
+  </header>
+
+  @if (recent().length) {
+    <nav class="recent" aria-label="Búsquedas recientes">
+      @for (r of recent(); track r.latitude + ',' + r.longitude) {
+        <span class="chip" [class.is-current]="isCurrent(r)">
+          <button type="button" class="chip__label" (click)="selectPlace(r)">{{ r.name }}</button>
+          <button type="button" class="chip__remove" [attr.aria-label]="'Quitar ' + r.name" (click)="removeRecent(r)">×</button>
+        </span>
+      }
+    </nav>
+  }
+
+  @if (status() === 'error') {
+    <div class="alert" role="alert">
+      <span>{{ errorMessage() }}</span>
+      @if (retryAction) {
+        <button type="button" class="alert__btn" (click)="retry()">Reintentar</button>
+      }
+    </div>
+  }
+
+  <main class="content" [class.is-loading]="status() === 'loading'" [attr.aria-busy]="status() === 'loading'">
+    @if (weather(); as w) {
+      <section class="hero glass" aria-live="polite">
+        <div class="hero__place">
+          <h1>{{ place()?.name }}</h1>
+          @if (placeSubtitle()) { <p class="muted">{{ placeSubtitle() }}</p> }
+          @if (localTime(); as t) {
+            <p class="muted small">{{ t | date: "EEEE d 'de' MMMM, HH:mm" }} · hora local</p>
+          }
+        </div>
+
+        <div class="hero__now">
+          <span class="hero__icon" aria-hidden="true">{{ icon(w.current.weather_code, isDay()) }}</span>
+          <div>
+            <p class="hero__temp">{{ w.current.temperature_2m | number: '1.0-0' }}<span>°</span></p>
+            <p class="hero__desc">{{ description(w.current.weather_code) }}</p>
+          </div>
+        </div>
+
+        @if (today(); as d) {
+          <p class="hero__range">
+            Máx. {{ d.max | number: '1.0-0' }}° · Mín. {{ d.min | number: '1.0-0' }}° ·
+            Sensación {{ w.current.apparent_temperature | number: '1.0-0' }}°
+          </p>
+        }
+      </section>
+
+      @if (today(); as d) {
+        <section class="metrics" aria-label="Detalles">
+          <div class="metric glass">
+            <span class="metric__label">💧 Humedad</span>
+            <span class="metric__value">{{ w.current.relative_humidity_2m }}%</span>
+          </div>
+          <div class="metric glass">
+            <span class="metric__label">💨 Viento</span>
+            <span class="metric__value">
+              {{ w.current.wind_speed_10m | number: '1.0-0' }} <small>km/h</small>
+              <span
+                class="wind-arrow"
+                [style.transform]="'rotate(' + (w.current.wind_direction_10m + 180) + 'deg)'"
+                [attr.aria-label]="'Dirección ' + cardinal(w.current.wind_direction_10m)"
+              >↑</span>
+              <small>{{ cardinal(w.current.wind_direction_10m) }}</small>
             </span>
           </div>
-        </div>
-      </div>
-    </main>
+          <div class="metric glass">
+            <span class="metric__label">🌧️ Precipitación</span>
+            <span class="metric__value">
+              {{ d.precipitation | number: '1.0-1' }} <small>mm</small>
+              @if (d.precipitationProbability !== null) { <small>&nbsp;· {{ d.precipitationProbability }}%</small> }
+            </span>
+          </div>
+          <div class="metric glass">
+            <span class="metric__label">🔆 Índice UV</span>
+            <span class="metric__value">
+              @if (d.uv !== null) { {{ d.uv | number: '1.0-0' }} <small>{{ d.uvLabel }}</small> } @else { – }
+            </span>
+          </div>
+          <div class="metric glass">
+            <span class="metric__label">🌅 Amanecer</span>
+            <span class="metric__value">{{ d.sunrise }}</span>
+          </div>
+          <div class="metric glass">
+            <span class="metric__label">🌇 Atardecer</span>
+            <span class="metric__value">{{ d.sunset }}</span>
+          </div>
+        </section>
+      }
 
-    <!-- Footer -->
-    <footer class="app-footer">
-      <p>Datos proporcionados por <a href="https://open-meteo.com/" target="_blank">Open-Meteo</a></p>
-    </footer>
-  </div>
+      <section class="forecast glass" aria-labelledby="forecast-title">
+        <h2 id="forecast-title">Próximos 7 días</h2>
+        <ul>
+          @for (day of forecast(); track day.date.getTime(); let i = $index) {
+            <li class="day">
+              <span class="day__name">
+                @switch (i) {
+                  @case (0) { Hoy }
+                  @case (1) { Mañana }
+                  @default { {{ day.date | date: 'EEE d' }} }
+                }
+              </span>
+              <span class="day__icon" [title]="description(day.code)">{{ icon(day.code) }}</span>
+              <span class="day__rain">
+                @if (day.precipitationProbability) { 💧{{ day.precipitationProbability }}% }
+              </span>
+              <span class="day__min">{{ day.min | number: '1.0-0' }}°</span>
+              <span class="day__bar"><span [style.left]="rangeStyle(day).left" [style.width]="rangeStyle(day).width"></span></span>
+              <span class="day__max">{{ day.max | number: '1.0-0' }}°</span>
+            </li>
+          }
+        </ul>
+      </section>
+    } @else if (status() === 'loading') {
+      <section class="hero glass skeleton" aria-label="Cargando el tiempo">
+        <div class="spinner"></div>
+        <p class="muted">Consultando el tiempo…</p>
+      </section>
+    }
+
+    @if (status() === 'loading' && weather()) {
+      <div class="spinner spinner--floating" aria-hidden="true"></div>
+    }
+  </main>
+
+  <footer class="footer">
+    Datos de <a href="https://open-meteo.com/" target="_blank" rel="noopener">Open-Meteo</a>
+  </footer>
 </div>
